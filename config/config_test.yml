@@ -1,0 +1,50 @@
+# example config
+name: Name
+api:
+  port: ":8085"
+  secret_key: "uCPzEwGkshf"
+mongo:
+  db: exampleDB
+  uri: "mongodb://root:example@localhost:27017"
+  users:
+    - login: "admin"
+      password: "adminpass"
+    - login: "user2"
+      password: "userpass"
+  collections:
+    [
+    "publication",
+    "authors",
+    "translations"
+    ]
+  publication:
+    fields:
+      - Name: Title
+        Type: "string"
+        Tags: 'binding:"required"'
+      - Name: Id
+        Type: "int64"
+        Tags: 'binding:"required"'
+  authors:
+    fields:
+      - Name: Title
+        Type: "string"
+        Tags: 'binding:"required"'
+      - Name: Id
+        Type: "int64"
+        Tags: 'binding:"required"'
+  translations:
+    fields:
+      - Name: Title
+        Type: "string"
+        Tags: 'binding:"required"'
+      - Name: Id
+        Type: "int64"
+        Tags: 'binding:"required"'
+      - Name: Author
+        Type: "struct"
+        Tags: 'binding:"omitempty"'
+        fields:
+          - Name: Name
+            Type: "string"
+            Tags: 'binding:"required"'
