@@ -1,7 +1,7 @@
 package router
 
 import (
-	"AliAlievMos/mongol/utils"
+	"github.com/AliAlievMos/mongol/utils"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

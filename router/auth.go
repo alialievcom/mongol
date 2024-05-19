@@ -1,12 +1,12 @@
 package router
 
 import (
-	"AliAlievMos/mongol/models"
-	"AliAlievMos/mongol/utils"
 	"context"
 	"crypto/sha1"
 	"encoding/base64"
 	"errors"
+	"github.com/AliAlievMos/mongol/models"
+	"github.com/AliAlievMos/mongol/utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"

@@ -1,9 +1,9 @@
 package sites_core
 
 import (
-	"AliAlievMos/mongol/config"
-	"AliAlievMos/mongol/mongo_connection"
-	"AliAlievMos/mongol/router"
+	"github.com/AliAlievMos/mongol/config"
+	"github.com/AliAlievMos/mongol/mongo_connection"
+	"github.com/AliAlievMos/mongol/router"
 )
 
 func StartApp(cfgPath string) {

@@ -1,8 +1,8 @@
 package config
 
 import (
-	"AliAlievMos/mongol/models"
 	"fmt"
+	"github.com/AliAlievMos/mongol/models"
 	"github.com/iancoleman/strcase"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"gopkg.in/yaml.v2"

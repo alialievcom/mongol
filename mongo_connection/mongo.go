@@ -1,10 +1,10 @@
 package mongo_connection
 
 import (
-	"AliAlievMos/mongol/constants"
-	sites_core "AliAlievMos/mongol/models"
 	"context"
 	"fmt"
+	"github.com/AliAlievMos/mongol/constants"
+	sites_core "github.com/AliAlievMos/mongol/models"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
