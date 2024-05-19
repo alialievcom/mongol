@@ -12,5 +12,6 @@ func StartApp(cfgPath string) {
 		panic(err)
 	}
 	collections := mongo_connection.ConnectMongo(cfg)
+
 	router.RunRouter(collections, cfg)
 }
