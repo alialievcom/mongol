@@ -1,4 +1,4 @@
-module alialiev/sites-core
+module AliAlievMos/mongol
 
 go 1.22.3
 

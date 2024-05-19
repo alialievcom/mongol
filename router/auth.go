@@ -1,8 +1,8 @@
 package router
 
 import (
-	"alialiev/sites-core/models"
-	"alialiev/sites-core/utils"
+	"AliAlievMos/mongol/models"
+	"AliAlievMos/mongol/utils"
 	"context"
 	"crypto/sha1"
 	"encoding/base64"

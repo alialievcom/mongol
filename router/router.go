@@ -1,8 +1,8 @@
 package router
 
 import (
-	"alialiev/sites-core/constants"
-	sites_core "alialiev/sites-core/models"
+	"AliAlievMos/mongol/constants"
+	sites_core "AliAlievMos/mongol/models"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 )

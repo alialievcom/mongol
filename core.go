@@ -1,9 +1,9 @@
 package sites_core
 
 import (
-	"alialiev/sites-core/config"
-	"alialiev/sites-core/mongo_connection"
-	"alialiev/sites-core/router"
+	"AliAlievMos/mongol/config"
+	"AliAlievMos/mongol/mongo_connection"
+	"AliAlievMos/mongol/router"
 )
 
 func StartApp(cfgPath string) {

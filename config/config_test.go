@@ -1,7 +1,7 @@
 package config
 
 import (
-	"alialiev/sites-core/models"
+	"AliAlievMos/mongol/models"
 	"fmt"
 	"github.com/iancoleman/strcase"
 	"reflect"
