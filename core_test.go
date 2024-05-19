@@ -1,4 +1,4 @@
-package sites_core
+package mongol
 
 import "testing"
 
