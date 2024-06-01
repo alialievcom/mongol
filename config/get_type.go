@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"reflect"
+	"time"
 )
 
 // getType converts string type to reflect.Type
@@ -36,13 +37,15 @@ func getType(typeName string) reflect.Type {
 		return reflect.TypeOf(float64(0))
 	case "bool":
 		return reflect.TypeOf(false)
+	case "time.Time":
+		return reflect.TypeOf(time.Time{})
 	default:
 		if len(typeName) > 1 {
 			if typeName[0] == '[' && typeName[1] == ']' {
 				return reflect.SliceOf(getType(typeName[2:]))
 			}
 			if typeName[0] == '*' {
-				return reflect.PtrTo(getType(typeName[1:]))
+				return reflect.PointerTo(getType(typeName[1:]))
 			}
 		}
 		panic(fmt.Sprintf("unsupported field type: %s", typeName))
