@@ -34,6 +34,9 @@ mongo:
       - Name: Id
         Type: "int64"
         Tags: 'binding:"required"'
+      - Name: Time
+        Type: "time.Time"
+        Tags: 'binding:"required"'
       - Name: Author
         Type: "struct"
         Tags: 'binding:"omitempty"'
@@ -57,7 +60,7 @@ mongo:
         Type: "int64"
         Tags: 'binding:"required"'
       - Name: Author
-        Type: "struct"
+        Type: "time.Time"
         Tags: 'binding:"omitempty"'
         fields:
           - Name: Name

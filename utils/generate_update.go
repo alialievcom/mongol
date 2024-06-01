@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+var (
+	structType = reflect.ValueOf(struct{}{}).Type()
+)
+
 func GenerateUpdateBson(v interface{}) (bson.M, error) {
 	update := bson.M{}
 	val := reflect.ValueOf(v)
@@ -44,7 +48,7 @@ func GenerateUpdateBson(v interface{}) (bson.M, error) {
 			field = field.Elem()
 		}
 
-		if field.Kind() == reflect.Struct {
+		if field.Type() == structType {
 			embeddedDoc, err := GenerateUpdateBson(field.Interface())
 			if err != nil {
 				return nil, err

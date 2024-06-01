@@ -29,7 +29,7 @@ func LoadConfig(filename string) (*models.Config, error) {
 		if !exists {
 			return nil, fmt.Errorf("%v structure not exist", details)
 		}
-		structType := generateStruct(details.Fields)
+		structType := generateStructWrapper(details.Fields)
 		cfg.GeneratedStructMap[collection] = structType
 	}
 
@@ -38,7 +38,17 @@ func LoadConfig(filename string) (*models.Config, error) {
 	return &cfg, nil
 }
 
-func generateStruct(fields []models.Field) reflect.Type {
+func generateStructWrapper(fields []models.Field) reflect.Type {
+	structFields := generateStruct(fields)
+	structFields = append(structFields, reflect.StructField{
+		Name: "ID",
+		Type: reflect.TypeOf(&primitive.ObjectID{}),
+		Tag:  `json:"_id" bson:"_id"`,
+	})
+
+	return reflect.StructOf(structFields)
+}
+func generateStruct(fields []models.Field) []reflect.StructField {
 	var structFields []reflect.StructField
 
 	for _, field := range fields {
@@ -46,7 +56,8 @@ func generateStruct(fields []models.Field) reflect.Type {
 			if field.Fields == nil && field.Type == "struct" {
 				log.Panicf("fileds in %s is nil while type struct", field.Name)
 			}
-			refType := generateStruct(*field.Fields)
+			structField := generateStruct(*field.Fields)
+			refType := reflect.StructOf(structField)
 			if field.Type == "*struct" {
 				refType = reflect.PointerTo(refType)
 			}
@@ -63,11 +74,6 @@ func generateStruct(fields []models.Field) reflect.Type {
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%s" bson:"%s" %s`, strcase.ToSnake(field.Name), strcase.ToSnake(field.Name), field.Tags)),
 		})
 	}
-	structFields = append(structFields, reflect.StructField{
-		Name: "ID",
-		Type: reflect.TypeOf(&primitive.ObjectID{}),
-		Tag:  `json:"_id" bson:"_id"`,
-	})
+	return structFields
 
-	return reflect.StructOf(structFields)
 }
