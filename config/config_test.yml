@@ -34,6 +34,20 @@ mongo:
       - Name: Id
         Type: "int64"
         Tags: 'binding:"required"'
+      - Name: Author
+        Type: "struct"
+        Tags: 'binding:"omitempty"'
+        fields:
+          - Name: Name
+            Type: "string"
+            Tags: 'binding:"required"'
+      - Name: NilStruct
+        Type: "*struct"
+        Tags: 'binding:"omitempty"'
+        fields:
+          - Name: Name
+            Type: "string"
+            Tags: 'binding:"required"'
   translations:
     fields:
       - Name: Title
@@ -44,6 +58,13 @@ mongo:
         Tags: 'binding:"required"'
       - Name: Author
         Type: "struct"
+        Tags: 'binding:"omitempty"'
+        fields:
+          - Name: Name
+            Type: "string"
+            Tags: 'binding:"required"'
+      - Name: NilStruct
+        Type: "*struct"
         Tags: 'binding:"omitempty"'
         fields:
           - Name: Name

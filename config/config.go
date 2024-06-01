@@ -27,7 +27,7 @@ func LoadConfig(filename string) (*models.Config, error) {
 	for _, collection := range cfg.Mongo.Collections {
 		details, exists := cfg.Mongo.Details[collection]
 		if !exists {
-			return nil, fmt.Errorf("%s structure not exist", details)
+			return nil, fmt.Errorf("%v structure not exist", details)
 		}
 		structType := generateStruct(details.Fields)
 		cfg.GeneratedStructMap[collection] = structType
@@ -42,11 +42,14 @@ func generateStruct(fields []models.Field) reflect.Type {
 	var structFields []reflect.StructField
 
 	for _, field := range fields {
-		if field.Type == "struct" {
-			if field.Fields == nil {
+		if field.Type == "struct" || field.Type == "*struct" {
+			if field.Fields == nil && field.Type == "struct" {
 				log.Panicf("fileds in %s is nil while type struct", field.Name)
 			}
 			refType := generateStruct(*field.Fields)
+			if field.Type == "*struct" {
+				refType = reflect.PointerTo(refType)
+			}
 			structFields = append(structFields, reflect.StructField{
 				Name: field.Name,
 				Type: refType,

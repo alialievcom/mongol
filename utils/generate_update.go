@@ -36,6 +36,7 @@ func GenerateUpdateBson(v interface{}) (bson.M, error) {
 		}
 
 		if field.Kind() == reflect.Ptr && field.IsNil() {
+			update[getFieldBsonName(fieldName, typeField)] = nil
 			continue
 		}
 
