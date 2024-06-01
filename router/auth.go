@@ -55,6 +55,7 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 		custom := jwt.MapClaims{
 			"username": input.Login,
 			"exp":      time.Now().Add(500 * time.Hour).Unix(),
+			"roles":    dataDB.Roles,
 		}
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, custom)
 		tokenString, err := token.SignedString(cfg.Api.SecretKey)
@@ -78,7 +79,7 @@ func createCheckTokenHandler(cfg *models.Config) gin.HandlerFunc {
 			utils.ErrorResponse(c, http.StatusUnauthorized, "no token in header")
 			return
 		}
-		_, err := VerToken(
+		roles, err := VerToken(
 			c,
 			token[0],
 			cfg.Api.SecretKey,
@@ -87,37 +88,48 @@ func createCheckTokenHandler(cfg *models.Config) gin.HandlerFunc {
 			utils.ErrorResponse(c, http.StatusUnauthorized, err.Error())
 			return
 		}
+		// nil is equal all
+		if roles == nil {
+			return
+		}
+		method := c.Request.Method
+		for _, r := range *roles {
+			if method == r {
+				return
+			}
+		}
+		utils.ErrorResponse(c, http.StatusUnauthorized, "no such role")
 	}
 }
 
-func VerToken(_ *gin.Context, tokenString string, secretKey []byte) (bool, error) {
+func VerToken(_ *gin.Context, tokenString string, secretKey []byte) (*[]string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		unixTime, ok := claims["exp"].(float64)
 		if !ok {
-			return false, errors.New("expired token")
+			return nil, errors.New("expired token")
 		}
 		timeExp := time.Unix(int64(unixTime), 0)
 		validTime := time.Now().After(timeExp)
 		if validTime {
-			return false, errors.New("expired token")
+			return nil, errors.New("expired token")
 		}
-		isAdmin, ok := claims["main_admin"].(bool)
+		roles, ok := claims["roles"].([]string)
 		if !ok {
-			return false, nil
+			return nil, nil
 		}
-		return isAdmin, nil
+		return &roles, nil
 	}
-	return false, errors.New("not valid token")
+	return nil, errors.New("not valid token")
 }
 
 func insertUsers(userCollection *mongo.Collection, cfg *models.Config) {
-
+	var existingUsers = make(map[string]struct{}, len(cfg.Mongo.Users))
 	for _, user := range cfg.Mongo.Users {
 		hasher := sha1.New()
 		hasher.Write([]byte(user.Password))
@@ -135,8 +147,21 @@ func insertUsers(userCollection *mongo.Collection, cfg *models.Config) {
 			if err != nil {
 				log.Panicf("Error inserting user %s: %v", user.Login, err)
 			}
+			existingUsers[user.Login] = struct{}{}
+			continue
 		} else if err != nil {
 			log.Panicf("Error checking for user %s: %v", user.Login, err)
 		}
+		existingUser.Password = hashedPass
+		existingUser.Roles = user.Roles
+		update, err := utils.GenerateUpdateBson(existingUser)
+		if err != nil {
+			log.Panicf("Error GenerateUpdateBson for user %s: %v", user.Login, err)
+		}
+		_, err = userCollection.UpdateByID(context.Background(), existingUser.ID, update)
+		if err != nil {
+			log.Panicf("Error UpdateByID for user %s: %v", user.Login, err)
+		}
+		existingUsers[existingUser.Login] = struct{}{}
 	}
 }

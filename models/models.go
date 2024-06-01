@@ -40,6 +40,7 @@ type Config struct {
 type User struct {
 	ID       primitive.ObjectID `bson:"_id" json:"_id"`
 	Login    string             `yaml:"login" bson:"login"`
+	Roles    *[]string          `yaml:"roles" bson:"roles"`
 	Password string             `yaml:"password" bson:"password"`
 }
 
