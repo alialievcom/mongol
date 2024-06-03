@@ -64,7 +64,7 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			return
 		}
 
-		c.JSON(http.StatusOK, models.Token{Access: tokenString})
+		c.JSON(http.StatusOK, models.Token{Access: tokenString, User: dataDB})
 	}
 }
 
