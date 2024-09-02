@@ -72,10 +72,7 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			return
 		}
 
-		storedRoles, ok := nestedData["roles"].([]string)
-		if !ok {
-			storedRoles = []string{}
-		}
+		storedRoles, _ := nestedData["roles"].(string)
 
 		if input.Password != storedPassword {
 			c.Status(http.StatusUnauthorized)
