@@ -9,15 +9,24 @@ import (
 
 func RunRouter(collections []*mongo.Collection, cfg *sites_core.Config) {
 	r := gin.Default()
-	var userCol *mongo.Collection
+	var authCol *mongo.Collection
+	var authColName string
+	if cfg.Mongo.Auth.AuthCollection != nil {
+		authColName = *cfg.Mongo.Auth.AuthCollection
+	} else {
+		authColName = constants.UsersCollection
+	}
 	for _, collection := range collections {
-		if collection.Name() == constants.UsersCollection {
-			userCol = collection
+		if collection.Name() == authColName {
+			authCol = collection
+			break
 		}
 	}
-	insertUsers(userCol, cfg)
+	if cfg.Mongo.Auth.AuthCollection != nil {
+		insertUsers(authCol, cfg)
+	}
 	admin := r.Group("/admin", createCheckTokenHandler(cfg))
-	r.POST("/login", createLoginHandler(userCol, cfg))
+	r.POST("/login", createLoginHandler(authCol, cfg))
 	for _, collection := range collections {
 		collectionName := collection.Name()
 		model := cfg.GeneratedStructMap[collectionName]

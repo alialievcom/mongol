@@ -11,13 +11,15 @@ mongo:
       password: "adminpass"
     - login: "user2"
       password: "userpass"
-      roles: ["DELETE"]
   collections:
     [
     "publication",
     "authors",
     "translations"
     ]
+  auth:
+    auth_collection: "authors"
+    auth_location: "author.user"
   publication:
     fields:
       - Name: Title
@@ -44,6 +46,19 @@ mongo:
           - Name: Name
             Type: "string"
             Tags: 'binding:"required"'
+          - Name: User
+            Type: "*struct"
+            Tags: 'binding:"omitempty"'
+            fields:
+              - Name: Login
+                Type: "string"
+                Tags: 'binding:"omitempty"'
+              - Name: Password
+                Type: "string"
+                Tags: 'binding:"omitempty"'
+              - Name: Roles
+                Type: "[]string"
+                Tags: 'binding:"omitempty"'
       - Name: NilStruct
         Type: "*struct"
         Tags: 'binding:"omitempty"'

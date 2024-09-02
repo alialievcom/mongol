@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -21,14 +22,16 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 	return func(c *gin.Context) {
 		var (
 			input  models.User
-			dataDB models.User
+			dataDB bson.M
 		)
+
+		//r := cfg.GeneratedStructMap[collectionUsers.Name()]
 
 		if err := c.ShouldBindJSON(&input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		filter := bson.M{"login": input.Login}
+		filter := bson.M{cfg.Mongo.Auth.AuthLocation + "login": input.Login}
 		result := collectionUsers.FindOne(c.Request.Context(), filter)
 		if err := result.Err(); err != nil {
 			if errors.Is(err, mongo.ErrNoDocuments) {
@@ -43,11 +46,44 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			return
 		}
 
+		authLocationParts := strings.Split(cfg.Mongo.Auth.AuthLocation, ".")
+		nestedData := dataDB
+
+		ID, ok := dataDB["_id"].(primitive.ObjectID)
+		if !ok {
+			ID = primitive.ObjectID{} // Default to empty roles if not present
+		}
+
+		for _, part := range authLocationParts {
+			if val, ok := nestedData[part]; ok {
+				if nestedMap, ok := val.(bson.M); ok {
+					nestedData = nestedMap
+				} else {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected data structure"})
+					return
+				}
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Path not found in data"})
+				return
+			}
+		}
+
+		storedPassword, ok := nestedData["password"].(string)
+		if !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Password not found in data"})
+			return
+		}
+
+		storedRoles, ok := nestedData["roles"].([]string)
+		if !ok {
+			storedRoles = []string{}
+		}
+
 		hasher := sha1.New()
 		hasher.Write([]byte(input.Password))
 		hashedPass := base64.URLEncoding.EncodeToString(hasher.Sum(cfg.Api.SecretKey))
 
-		if hashedPass != dataDB.Password {
+		if hashedPass != storedPassword {
 			c.Status(http.StatusUnauthorized)
 			return
 		}
@@ -55,7 +91,7 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 		custom := jwt.MapClaims{
 			"username": input.Login,
 			"exp":      time.Now().Add(500 * time.Hour).Unix(),
-			"roles":    dataDB.Roles,
+			"roles":    storedRoles,
 		}
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, custom)
 		tokenString, err := token.SignedString(cfg.Api.SecretKey)
@@ -64,7 +100,11 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			return
 		}
 
-		c.JSON(http.StatusOK, models.Token{Access: tokenString, User: dataDB})
+		c.JSON(http.StatusOK, models.Token{Access: tokenString, User: models.User{
+			ID:    ID,
+			Login: input.Login,
+			Roles: storedRoles,
+		}})
 	}
 }
 
@@ -153,7 +193,6 @@ func insertUsers(userCollection *mongo.Collection, cfg *models.Config) {
 			log.Panicf("Error checking for user %s: %v", user.Login, err)
 		}
 		existingUser.Password = hashedPass
-		existingUser.Roles = user.Roles
 		update, err := utils.GenerateUpdateBson(existingUser)
 		if err != nil {
 			log.Panicf("Error GenerateUpdateBson for user %s: %v", user.Login, err)
@@ -164,4 +203,11 @@ func insertUsers(userCollection *mongo.Collection, cfg *models.Config) {
 		}
 		existingUsers[existingUser.Login] = struct{}{}
 	}
+}
+
+func getFilterName(cfg *models.Config) string {
+	if cfg.Mongo.Auth.AuthLocation == "" {
+		return "login"
+	}
+	return cfg.Mongo.Auth.AuthLocation + ".login"
 }

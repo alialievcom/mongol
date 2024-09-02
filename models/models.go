@@ -22,6 +22,7 @@ type MongoConfig struct {
 	Collections []string                    `yaml:"collections"`
 	Details     map[string]CollectionConfig `yaml:",inline"`
 	Users       []User                      `yaml:"users"`
+	Auth        Auth                        `yaml:"auth"`
 }
 
 type Api struct {
@@ -29,7 +30,10 @@ type Api struct {
 	SecretKeyYML string `yaml:"secret_key"`
 	SecretKey    []byte `yaml:"-"`
 }
-
+type Auth struct {
+	AuthCollection *string `yaml:"auth_collection"`
+	AuthLocation   string  `yaml:"auth_location"`
+}
 type Config struct {
 	Name               string                  `yaml:"name"`
 	Api                Api                     `yaml:"api"`
@@ -40,7 +44,7 @@ type Config struct {
 type User struct {
 	ID       primitive.ObjectID `bson:"_id" json:"_id"`
 	Login    string             `yaml:"login" bson:"login" json:"login"`
-	Roles    *[]string          `yaml:"roles" bson:"roles" json:"roles"`
+	Roles    []string           `yaml:"roles" bson:"roles" json:"roles"`
 	Password string             `yaml:"password" bson:"password"`
 }
 
