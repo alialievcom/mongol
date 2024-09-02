@@ -22,7 +22,7 @@ func RunRouter(collections []*mongo.Collection, cfg *sites_core.Config) {
 			break
 		}
 	}
-	if cfg.Mongo.Auth.AuthCollection != nil {
+	if cfg.Mongo.Auth.AuthCollection == nil {
 		insertUsers(authCol, cfg)
 	}
 	admin := r.Group("/admin", createCheckTokenHandler(cfg))
