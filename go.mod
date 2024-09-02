@@ -1,4 +1,4 @@
-module github.com/AliAlievMos/mongol
+module github.com/alialievcom/mongol
 
 go 1.22.3
 
