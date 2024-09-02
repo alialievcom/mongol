@@ -31,7 +31,7 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		filter := bson.M{cfg.Mongo.Auth.AuthLocation + "login": input.Login}
+		filter := bson.M{getFilterName(cfg): input.Login}
 		result := collectionUsers.FindOne(c.Request.Context(), filter)
 		if err := result.Err(); err != nil {
 			if errors.Is(err, mongo.ErrNoDocuments) {
