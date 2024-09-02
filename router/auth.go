@@ -25,8 +25,6 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			dataDB bson.M
 		)
 
-		//r := cfg.GeneratedStructMap[collectionUsers.Name()]
-
 		if err := c.ShouldBindJSON(&input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -79,11 +77,7 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			storedRoles = []string{}
 		}
 
-		hasher := sha1.New()
-		hasher.Write([]byte(input.Password))
-		hashedPass := base64.URLEncoding.EncodeToString(hasher.Sum(cfg.Api.SecretKey))
-
-		if hashedPass != storedPassword {
+		if input.Password != storedPassword {
 			c.Status(http.StatusUnauthorized)
 			return
 		}
