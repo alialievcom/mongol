@@ -46,25 +46,26 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			return
 		}
 
-		authLocationParts := strings.Split(cfg.Mongo.Auth.AuthLocation, ".")
-		nestedData := dataDB
-
 		ID, ok := dataDB["_id"].(primitive.ObjectID)
 		if !ok {
 			ID = primitive.ObjectID{} // Default to empty roles if not present
 		}
 
-		for _, part := range authLocationParts {
-			if val, ok := nestedData[part]; ok {
-				if nestedMap, ok := val.(bson.M); ok {
-					nestedData = nestedMap
+		authLocationParts := strings.Split(cfg.Mongo.Auth.AuthLocation, ".")
+		nestedData := dataDB
+		if len(authLocationParts) > 1 {
+			for _, part := range authLocationParts {
+				if val, ok := nestedData[part]; ok {
+					if nestedMap, ok := val.(bson.M); ok {
+						nestedData = nestedMap
+					} else {
+						c.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected data structure"})
+						return
+					}
 				} else {
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected data structure"})
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Path not found in data"})
 					return
 				}
-			} else {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Path not found in data"})
-				return
 			}
 		}
 
@@ -100,57 +101,50 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 		}})
 	}
 }
-
 func createRegHandler(collection *mongo.Collection, cfg *models.Config, model reflect.Type) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		pub := reflect.New(model).Interface()
+		var input models.User
 
-		if err := c.ShouldBindJSON(pub); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		// Bind JSON to input struct
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input data"})
 			return
 		}
 
-		if pub == nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while generating update BSON"})
+		// Check if the login already exists in the database
+		filter := bson.M{getFilterName(cfg): input.Login}
+		result := collection.FindOne(c.Request.Context(), filter)
+		if result.Err() == nil {
+			// If a user with this login already exists, return an error
+			c.JSON(http.StatusConflict, gin.H{"error": "Login already exists, please choose another"})
+			return
+		} else if !errors.Is(result.Err(), mongo.ErrNoDocuments) {
+			// Handle database errors other than no documents found
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error checking existing user"})
 			return
 		}
 
-		pubValue := reflect.ValueOf(pub).Elem()
-		idField := pubValue.FieldByName("ID")
-
-		if !idField.IsValid() {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid model: missing ID field"})
-			return
-		}
-
-		if idField.IsZero() {
-			oid := primitive.NewObjectID()
-			idField.Set(reflect.ValueOf(&oid))
-		}
-
-		update, err := utils.GenerateUpdateBson(pubValue.Interface())
+		// Generate the BSON update for the new user
+		update, err := utils.GenerateUpdateBson(input)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while generating update BSON"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error generating update BSON"})
 			return
 		}
 
+		// Assign a new ObjectID
+		oid := primitive.NewObjectID()
 		opt := options.Update().SetUpsert(true)
-		_, err = collection.UpdateByID(c.Request.Context(), idField.Interface(), update, opt)
+		_, err = collection.UpdateByID(c.Request.Context(), oid, update, opt)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating or creating document"})
 			return
 		}
 
-		loginField := pubValue.FieldByName("Login")
-		rolesField := pubValue.FieldByName("Roles")
-
-		login, _ := loginField.Interface().(string)
-		roles, _ := rolesField.Interface().([]string)
-
+		// Create a JWT token
 		custom := jwt.MapClaims{
-			"username": login,
+			"username": input.Login,
 			"exp":      time.Now().Add(500 * time.Hour).Unix(),
-			"roles":    roles,
+			"roles":    input.Roles,
 		}
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, custom)
 		tokenString, err := token.SignedString(cfg.Api.SecretKey)
@@ -159,11 +153,15 @@ func createRegHandler(collection *mongo.Collection, cfg *models.Config, model re
 			return
 		}
 
-		c.JSON(http.StatusOK, models.Token{Access: tokenString, User: models.User{
-			ID:    idField.Interface().(primitive.ObjectID),
-			Login: login,
-			Roles: roles,
-		}})
+		// Respond with the token and user details
+		c.JSON(http.StatusOK, models.Token{
+			Access: tokenString,
+			User: models.User{
+				ID:    oid,
+				Login: input.Login,
+				Roles: input.Roles,
+			},
+		})
 	}
 }
 

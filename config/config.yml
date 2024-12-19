@@ -1,0 +1,38 @@
+name: WaVol3
+api:
+  port: ":9001"
+  secret_key: "uCPzEwGkshf"
+mongo:
+  db: wavol3Db
+  uri: "mongodb://root:a9sLUjB3tvGTH@localhost:27017"
+#  uri: "mongodb://root:mxfSMaIrrNTng3na@89.185.85.249:27017"
+  collections:
+    [
+      "authors",
+      "posts"
+    ]
+  auth:
+    auth_collection: "authors"
+    auth_location: ""
+  posts:
+    fields:
+      - Name: Text
+        Type: "string"
+        Tags: 'binding:"required,gte=1,lte=100"'
+      - Name: AuthorId
+        Type: "string"
+        Tags: 'binding:"required"'
+      - Name: TimePublication
+        Type: "time.Time"
+        Tags: 'binding:"required"'
+  authors:
+    fields:
+      - Name: Login
+        Type: "string"
+        Tags: 'binding:"required,gte=7,lte=30"'
+      - Name: Password
+        Type: "string"
+        Tags: 'binding:"required,gte=7,lte=30"'
+      - Name: Roles
+        Type: "[]string"
+        Tags: 'binding:"omitempty"'
