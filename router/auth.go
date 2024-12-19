@@ -125,7 +125,7 @@ func createRegHandler(collection *mongo.Collection, cfg *models.Config, model re
 
 		if idField.IsZero() {
 			oid := primitive.NewObjectID()
-			idField.Set(reflect.ValueOf(oid))
+			idField.Set(reflect.ValueOf(&oid))
 		}
 
 		update, err := utils.GenerateUpdateBson(pubValue.Interface())
