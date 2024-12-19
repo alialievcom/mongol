@@ -25,15 +25,17 @@ func RunRouter(collections []*mongo.Collection, cfg *sites_core.Config) {
 	if cfg.Mongo.Auth.AuthCollection == nil {
 		insertUsers(authCol, cfg)
 	}
-	admin := r.Group("/admin", createCheckTokenHandler(cfg))
+	authen := r.Group("/authenticated", createCheckTokenHandler(cfg))
 	r.POST("/login", createLoginHandler(authCol, cfg))
+	modelAuth := cfg.GeneratedStructMap[authColName]
+	r.POST("/reg", createRegHandler(authCol, cfg, modelAuth))
 	for _, collection := range collections {
 		collectionName := collection.Name()
 		model := cfg.GeneratedStructMap[collectionName]
 
-		admin.POST("/"+collectionName, createPostHandler(collection, model))
+		authen.POST("/"+collectionName, createPostHandler(collection, model))
 		r.GET("/"+collectionName, createGetHandler(collection))
-		admin.DELETE("/"+collectionName+"/:id", createDeleteHandler(collection))
+		authen.DELETE("/"+collectionName+"/:id", createDeleteHandler(collection))
 	}
 
 	err := r.Run(cfg.Api.Port)

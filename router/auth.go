@@ -12,8 +12,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -72,7 +74,7 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			return
 		}
 
-		storedRoles, _ := nestedData["roles"].(string)
+		storedRoles, _ := nestedData["roles"].([]string)
 
 		if input.Password != storedPassword {
 			c.Status(http.StatusUnauthorized)
@@ -95,6 +97,72 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			ID:    ID,
 			Login: input.Login,
 			Roles: storedRoles,
+		}})
+	}
+}
+
+func createRegHandler(collection *mongo.Collection, cfg *models.Config, model reflect.Type) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		pub := reflect.New(model).Interface()
+
+		if err := c.ShouldBindJSON(pub); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if pub == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while generating update BSON"})
+			return
+		}
+
+		pubValue := reflect.ValueOf(pub).Elem()
+		idField := pubValue.FieldByName("ID")
+
+		if !idField.IsValid() {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid model: missing ID field"})
+			return
+		}
+
+		if idField.IsZero() {
+			oid := primitive.NewObjectID()
+			idField.Set(reflect.ValueOf(oid))
+		}
+
+		update, err := utils.GenerateUpdateBson(pubValue.Interface())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while generating update BSON"})
+			return
+		}
+
+		opt := options.Update().SetUpsert(true)
+		_, err = collection.UpdateByID(c.Request.Context(), idField.Interface(), update, opt)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating or creating document"})
+			return
+		}
+
+		loginField := pubValue.FieldByName("Login")
+		rolesField := pubValue.FieldByName("Roles")
+
+		login, _ := loginField.Interface().(string)
+		roles, _ := rolesField.Interface().([]string)
+
+		custom := jwt.MapClaims{
+			"username": login,
+			"exp":      time.Now().Add(500 * time.Hour).Unix(),
+			"roles":    roles,
+		}
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, custom)
+		tokenString, err := token.SignedString(cfg.Api.SecretKey)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error generating token"})
+			return
+		}
+
+		c.JSON(http.StatusOK, models.Token{Access: tokenString, User: models.User{
+			ID:    idField.Interface().(primitive.ObjectID),
+			Login: login,
+			Roles: roles,
 		}})
 	}
 }
