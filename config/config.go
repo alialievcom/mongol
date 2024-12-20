@@ -22,7 +22,7 @@ func LoadConfig(filename string) (*models.Config, error) {
 		return nil, fmt.Errorf("error unmarshaling YAML: %w", err)
 	}
 
-	cfg.GeneratedStructMap = make(map[string]reflect.Type)
+	cfg.GeneratedStructMap = make(map[string]models.Collection)
 
 	for _, collection := range cfg.Mongo.Collections {
 		details, exists := cfg.Mongo.Details[collection]
@@ -30,7 +30,11 @@ func LoadConfig(filename string) (*models.Config, error) {
 			return nil, fmt.Errorf("%v structure not exist", details)
 		}
 		structType := generateStructWrapper(details.Fields)
-		cfg.GeneratedStructMap[collection] = structType
+		cfg.GeneratedStructMap[collection] = models.Collection{
+			Model:        structType,
+			SortBy:       details.SortBy,
+			QueryFilters: details.GetQueryFilters(),
+		}
 	}
 
 	cfg.Api.SecretKey = []byte(cfg.Api.SecretKeyYML)

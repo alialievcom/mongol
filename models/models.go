@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/iancoleman/strcase"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"reflect"
 )
@@ -14,6 +15,15 @@ type Field struct {
 
 type CollectionConfig struct {
 	Fields []Field `yaml:"fields"`
+	SortBy string  `yaml:"sort_by"`
+}
+
+func (cc *CollectionConfig) GetQueryFilters() []string {
+	var filters = make([]string, len(cc.Fields))
+	for i, field := range cc.Fields {
+		filters[i] = strcase.ToSnake(field.Name)
+	}
+	return filters
 }
 
 type MongoConfig struct {
@@ -35,10 +45,16 @@ type Auth struct {
 	AuthLocation   string  `yaml:"auth_location"`
 }
 type Config struct {
-	Name               string                  `yaml:"name"`
-	Api                Api                     `yaml:"api"`
-	Mongo              MongoConfig             `yaml:"mongo"`
-	GeneratedStructMap map[string]reflect.Type `yaml:"-"`
+	Name               string                `yaml:"name"`
+	Api                Api                   `yaml:"api"`
+	Mongo              MongoConfig           `yaml:"mongo"`
+	GeneratedStructMap map[string]Collection `yaml:"-"`
+}
+
+type Collection struct {
+	Model        reflect.Type
+	SortBy       string
+	QueryFilters []string
 }
 
 type User struct {

@@ -27,14 +27,13 @@ func RunRouter(collections []*mongo.Collection, cfg *sites_core.Config) {
 	}
 	authen := r.Group("/authenticated", createCheckTokenHandler(cfg))
 	r.POST("/login", createLoginHandler(authCol, cfg))
-	modelAuth := cfg.GeneratedStructMap[authColName]
-	r.POST("/reg", createRegHandler(authCol, cfg, modelAuth))
+	r.POST("/reg", createRegHandler(authCol, cfg))
 	for _, collection := range collections {
 		collectionName := collection.Name()
-		model := cfg.GeneratedStructMap[collectionName]
+		details := cfg.GeneratedStructMap[collectionName]
 
-		authen.POST("/"+collectionName, createPostHandler(collection, model))
-		r.GET("/"+collectionName, createGetHandler(collection))
+		authen.POST("/"+collectionName, createPostHandler(collection, details.Model))
+		r.GET("/"+collectionName, createGetHandler(collection, details))
 		authen.DELETE("/"+collectionName+"/:id", createDeleteHandler(collection))
 	}
 

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/AliAlievMos/mongol/models"
 	"github.com/AliAlievMos/mongol/utils"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -9,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"reflect"
+	"strings"
 )
 
 func createPostHandler(collection *mongo.Collection, model reflect.Type) gin.HandlerFunc {
@@ -53,7 +55,19 @@ func createPostHandler(collection *mongo.Collection, model reflect.Type) gin.Han
 	}
 }
 
-func createGetHandler(collection *mongo.Collection) gin.HandlerFunc {
+func createGetHandler(collection *mongo.Collection, cfg models.Collection) gin.HandlerFunc {
+	var order int
+	sortBy := cfg.SortBy
+	if sortBy != "" {
+		sort := strings.Split(sortBy, ":")
+		sortBy = sort[0]
+		if sort[1] == "desc" {
+			order = -1
+		} else {
+			order = 1
+		}
+	}
+	qf := cfg.QueryFilters
 	return func(c *gin.Context) {
 		var files []bson.M
 		id := c.Query("id")
@@ -68,9 +82,23 @@ func createGetHandler(collection *mongo.Collection) gin.HandlerFunc {
 			filter = bson.M{"_id": objID}
 		} else {
 			filter = bson.M{}
+			for _, filterName := range qf {
+				if value, ok := c.GetQuery(filterName); ok {
+					filter[filterName] = value
+				}
+			}
 		}
 
-		cursor, err := collection.Find(c.Request.Context(), filter)
+		// Set sorting options
+		var sortOption bson.D
+		if sortBy != "" {
+			sortOption = bson.D{{Key: sortBy, Value: order}} // Ascending order
+		} else {
+			sortOption = bson.D{} // No sorting
+		}
+
+		findOptions := options.Find().SetSort(sortOption)
+		cursor, err := collection.Find(c.Request.Context(), filter, findOptions)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching documents"})
 			return

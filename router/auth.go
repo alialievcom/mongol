@@ -15,7 +15,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"net/http"
-	"reflect"
 	"strings"
 	"time"
 )
@@ -101,7 +100,7 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 		}})
 	}
 }
-func createRegHandler(collection *mongo.Collection, cfg *models.Config, model reflect.Type) gin.HandlerFunc {
+func createRegHandler(collection *mongo.Collection, cfg *models.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input models.User
 

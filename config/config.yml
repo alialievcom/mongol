@@ -15,6 +15,7 @@ mongo:
     auth_collection: "authors"
     auth_location: ""
   posts:
+    sort_by: "time_publication:desc"
     fields:
       - Name: Text
         Type: "string"
@@ -26,6 +27,7 @@ mongo:
         Type: "time.Time"
         Tags: 'binding:"required"'
   authors:
+    sort_by: "login:asc"
     fields:
       - Name: Login
         Type: "string"
