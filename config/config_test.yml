@@ -3,6 +3,7 @@ name: Name
 api:
   port: ":8085"
   secret_key: "uCPzEwGkshf"
+  origin: "*"
 mongo:
   db: exampleDB
   uri: "mongodb://root:example@localhost:27017"

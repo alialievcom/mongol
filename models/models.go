@@ -39,6 +39,7 @@ type Api struct {
 	Port         string `yaml:"port"`
 	SecretKeyYML string `yaml:"secret_key"`
 	SecretKey    []byte `yaml:"-"`
+	Origin       string `yaml:"origin"`
 }
 type Auth struct {
 	AuthCollection *string `yaml:"auth_collection"`

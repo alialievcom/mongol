@@ -3,12 +3,20 @@ package router
 import (
 	"github.com/AliAlievMos/mongol/constants"
 	sites_core "github.com/AliAlievMos/mongol/models"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func RunRouter(collections []*mongo.Collection, cfg *sites_core.Config) {
 	r := gin.Default()
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{cfg.Api.Origin},
+		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}))
+	r.Use(corsMiddleware(cfg.Api.Origin))
 	var authCol *mongo.Collection
 	var authColName string
 	if cfg.Mongo.Auth.AuthCollection != nil {

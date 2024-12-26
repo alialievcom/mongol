@@ -166,7 +166,7 @@ func createRegHandler(collection *mongo.Collection, cfg *models.Config) gin.Hand
 
 func createCheckTokenHandler(cfg *models.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.Request.Header["Token"]
+		token := c.Request.Header["Authorization"]
 		if len(token) == 0 {
 			utils.ErrorResponse(c, http.StatusUnauthorized, "no token in header")
 			return
