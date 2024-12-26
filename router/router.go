@@ -6,6 +6,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
+	"net/http"
 )
 
 func RunRouter(collections []*mongo.Collection, cfg *sites_core.Config) {
@@ -16,6 +17,7 @@ func RunRouter(collections []*mongo.Collection, cfg *sites_core.Config) {
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
+	r.Use(corsMiddleware(cfg.Api.Origin))
 	var authCol *mongo.Collection
 	var authColName string
 	if cfg.Mongo.Auth.AuthCollection != nil {
@@ -43,6 +45,10 @@ func RunRouter(collections []*mongo.Collection, cfg *sites_core.Config) {
 		r.GET("/"+collectionName, createGetHandler(collection, details))
 		authen.DELETE("/"+collectionName+"/:id", createDeleteHandler(collection))
 	}
+
+	r.OPTIONS("/*path", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
 
 	err := r.Run(cfg.Api.Port)
 	if err != nil {
