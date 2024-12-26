@@ -16,7 +16,6 @@ func RunRouter(collections []*mongo.Collection, cfg *sites_core.Config) {
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
-	r.Use(corsMiddleware(cfg.Api.Origin))
 	var authCol *mongo.Collection
 	var authColName string
 	if cfg.Mongo.Auth.AuthCollection != nil {
