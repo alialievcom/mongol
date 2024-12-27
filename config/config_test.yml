@@ -3,11 +3,10 @@ name: Name
 api:
   port: ":8085"
   secret_key: "uCPzEwGkshf"
-  origin: "https://vol-3.web-almanac.com"
+  origin: "*"
 mongo:
   db: exampleDB
-#  uri: "mongodb://root:example@localhost:27017"
-  uri: "mongodb://root:a9sLUjB3tvGTH@85.192.30.210:27017"
+  uri: "mongodb://root:example@localhost:27017"
 
   users:
     - login: "admin"
@@ -59,7 +58,6 @@ mongo:
               - Name: Password
                 Type: "string"
                 Tags: 'binding:"omitempty"'
-                IsHidden: true
               - Name: Roles
                 Type: "[]string"
                 Tags: 'binding:"omitempty"'

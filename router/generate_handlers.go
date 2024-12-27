@@ -115,6 +115,13 @@ func createGetHandler(collection *mongo.Collection, cfg models.Collection) gin.H
 			return
 		}
 
+		for i, _ := range files {
+			_, ok := files[i]["pass"]
+			if ok {
+				files[i]["password"] = "-"
+			}
+		}
+
 		c.JSON(http.StatusOK, files)
 	}
 }
