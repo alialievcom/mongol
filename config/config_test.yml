@@ -59,6 +59,7 @@ mongo:
               - Name: Password
                 Type: "string"
                 Tags: 'binding:"omitempty"'
+                IsHidden: true
               - Name: Roles
                 Type: "[]string"
                 Tags: 'binding:"omitempty"'

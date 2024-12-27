@@ -7,10 +7,11 @@ import (
 )
 
 type Field struct {
-	Name   string   `yaml:"Name"`
-	Type   string   `yaml:"Type"`
-	Tags   string   `yaml:"Tags"`
-	Fields *[]Field `yaml:"fields"`
+	Name     string   `yaml:"Name"`
+	Type     string   `yaml:"Type"`
+	Tags     string   `yaml:"Tags"`
+	IsHidden bool     `yaml:"IsHidden"`
+	Fields   *[]Field `yaml:"fields"`
 }
 
 type CollectionConfig struct {

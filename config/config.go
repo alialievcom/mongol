@@ -72,10 +72,14 @@ func generateStruct(fields []models.Field) []reflect.StructField {
 			})
 			continue
 		}
+		jsonName := "-"
+		if !field.IsHidden {
+			jsonName = strcase.ToSnake(field.Name)
+		}
 		structFields = append(structFields, reflect.StructField{
 			Name: field.Name,
 			Type: getType(field.Type),
-			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%s" bson:"%s" %s`, strcase.ToSnake(field.Name), strcase.ToSnake(field.Name), field.Tags)),
+			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%s" bson:"%s" %s`, jsonName, strcase.ToSnake(field.Name), field.Tags)),
 		})
 	}
 	return structFields
