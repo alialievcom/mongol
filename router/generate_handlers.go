@@ -116,7 +116,7 @@ func createGetHandler(collection *mongo.Collection, cfg models.Collection) gin.H
 		}
 
 		for i, _ := range files {
-			_, ok := files[i]["pass"]
+			_, ok := files[i]["password"]
 			if ok {
 				files[i]["password"] = "-"
 			}
