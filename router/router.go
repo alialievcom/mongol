@@ -14,7 +14,7 @@ func RunRouter(collections []*mongo.Collection, cfg *sites_core.Config) {
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{cfg.Api.Origin},
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowHeaders:     []string{"*"},
 		AllowCredentials: true,
 	}))
 	r.Use(corsMiddleware(cfg.Api.Origin))
