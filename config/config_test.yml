@@ -6,7 +6,8 @@ api:
   origin: "*"
 mongo:
   db: exampleDB
-  uri: "mongodb://root:example@localhost:27017"
+#  uri: "mongodb://root:example@localhost:27017"
+  uri: "mongodb://root:a9sLUjB3tvGTH@85.192.30.210:27017"
 
   users:
     - login: "admin"
@@ -17,11 +18,27 @@ mongo:
     [
     "publication",
     "authors",
-    "translations"
+    "translations",
+    "dictionaries"
     ]
   auth:
     auth_collection: "authors"
     auth_location: "author.user"
+  dictionaries:
+    fields:
+      - Name: Dict
+        Type: "[]struct"
+        Tags: 'binding:"required,gte=1,lte=3000"'
+        fields:
+          - Name: GifTag
+            Type: "string"
+            Tags: 'binding:"required"'
+          - Name: Meaning
+            Type: "string"
+            Tags: 'binding:"required"'
+      - Name: AuthorId
+        Type: "string"
+        Tags: 'binding:"required,gte=1,lte=30"'
   publication:
     fields:
       - Name: Title

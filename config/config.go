@@ -11,6 +11,7 @@ import (
 	"reflect"
 )
 
+// LoadConfig loads the configuration from the YAML file and generates structs based on the fields
 func LoadConfig(filename string) (*models.Config, error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
@@ -42,6 +43,7 @@ func LoadConfig(filename string) (*models.Config, error) {
 	return &cfg, nil
 }
 
+// generateStructWrapper generates a struct wrapper with an additional ID field
 func generateStructWrapper(fields []models.Field) reflect.Type {
 	structFields := generateStruct(fields)
 	structFields = append(structFields, reflect.StructField{
@@ -52,13 +54,15 @@ func generateStructWrapper(fields []models.Field) reflect.Type {
 
 	return reflect.StructOf(structFields)
 }
+
+// generateStruct generates a list of struct fields from the given fields
 func generateStruct(fields []models.Field) []reflect.StructField {
 	var structFields []reflect.StructField
 
 	for _, field := range fields {
 		if field.Type == "struct" || field.Type == "*struct" {
 			if field.Fields == nil && field.Type == "struct" {
-				log.Panicf("fileds in %s is nil while type struct", field.Name)
+				log.Panicf("fields in %s are nil while type is struct", field.Name)
 			}
 			structField := generateStruct(*field.Fields)
 			refType := reflect.StructOf(structField)
@@ -72,6 +76,23 @@ func generateStruct(fields []models.Field) []reflect.StructField {
 			})
 			continue
 		}
+		// Handle slices like []struct
+		if field.Type == "[]struct" {
+			// Recursively handle the inner struct fields
+			if field.Fields == nil {
+				log.Panicf("fields in %s are nil while type is []struct", field.Name)
+			}
+			structField := generateStruct(*field.Fields)
+			refType := reflect.SliceOf(reflect.StructOf(structField))
+			structFields = append(structFields, reflect.StructField{
+				Name: field.Name,
+				Type: refType,
+				Tag:  reflect.StructTag(fmt.Sprintf(`json:"%s" bson:"%s" %s`, strcase.ToSnake(field.Name), strcase.ToSnake(field.Name), field.Tags)),
+			})
+			continue
+		}
+
+		// Handle other types like string, int, map, etc.
 		structFields = append(structFields, reflect.StructField{
 			Name: field.Name,
 			Type: getType(field.Type),
@@ -79,5 +100,4 @@ func generateStruct(fields []models.Field) []reflect.StructField {
 		})
 	}
 	return structFields
-
 }

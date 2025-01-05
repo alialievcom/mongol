@@ -42,14 +42,23 @@ func getType(typeName string) reflect.Type {
 	case "map[string]string":
 		return reflect.TypeOf(map[string]string{})
 	default:
-		if len(typeName) > 1 {
-			if typeName[0] == '[' && typeName[1] == ']' {
-				return reflect.SliceOf(getType(typeName[2:]))
+		// Check for slices
+		if len(typeName) > 2 && typeName[0] == '[' && typeName[1] == ']' {
+			// For []struct, this should be processed separately
+			if typeName[2:6] == "struct" {
+				// Remove '[]struct' from the typeName
+				structType := typeName[7 : len(typeName)-1] // Removing '[]struct{...}'
+				return reflect.SliceOf(getType("struct{" + structType + "}"))
 			}
-			if typeName[0] == '*' {
-				return reflect.PointerTo(getType(typeName[1:]))
-			}
+			return reflect.SliceOf(getType(typeName[2:]))
 		}
+
+		// Check for pointer types
+		if len(typeName) > 1 && typeName[0] == '*' {
+			return reflect.PointerTo(getType(typeName[1:]))
+		}
+
+		// Fallback to panic if unsupported type
 		panic(fmt.Sprintf("unsupported field type: %s", typeName))
 	}
 }
