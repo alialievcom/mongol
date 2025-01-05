@@ -6,8 +6,7 @@ api:
   origin: "*"
 mongo:
   db: exampleDB
-#  uri: "mongodb://root:example@localhost:27017"
-  uri: "mongodb://root:a9sLUjB3tvGTH@85.192.30.210:27017"
+  uri: "mongodb://root:example@localhost:27017"
 
   users:
     - login: "admin"
