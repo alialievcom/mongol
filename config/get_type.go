@@ -39,6 +39,8 @@ func getType(typeName string) reflect.Type {
 		return reflect.TypeOf(false)
 	case "time.Time":
 		return reflect.TypeOf(time.Time{})
+	case "map[string]string":
+		return reflect.TypeOf(map[string]string{})
 	default:
 		if len(typeName) > 1 {
 			if typeName[0] == '[' && typeName[1] == ']' {
