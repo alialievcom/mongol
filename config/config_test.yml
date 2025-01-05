@@ -30,6 +30,9 @@ mongo:
       - Name: Id
         Type: "int64"
         Tags: 'binding:"required"'
+      - Name: Map
+        Type: "map[string]string"
+        Tags: 'binding:"required"'
   authors:
     fields:
       - Name: Title
