@@ -76,6 +76,12 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 
 		storedRoles, _ := nestedData["roles"].([]string)
 
+		if collectionUsers.Name() == "users" {
+			hasher := sha1.New()
+			hasher.Write([]byte(input.Password))
+			storedPassword = base64.URLEncoding.EncodeToString(hasher.Sum(cfg.Api.SecretKey))
+		}
+
 		if input.Password != storedPassword {
 			c.Status(http.StatusUnauthorized)
 			return
