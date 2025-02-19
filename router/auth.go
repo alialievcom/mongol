@@ -79,7 +79,7 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 		if collectionUsers.Name() == "users" {
 			hasher := sha1.New()
 			hasher.Write([]byte(input.Password))
-			storedPassword = base64.URLEncoding.EncodeToString(hasher.Sum(cfg.Api.SecretKey))
+			input.Password = base64.URLEncoding.EncodeToString(hasher.Sum(cfg.Api.SecretKey))
 		}
 
 		if input.Password != storedPassword {
