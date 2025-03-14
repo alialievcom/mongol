@@ -63,7 +63,7 @@ type User struct {
 	ID       primitive.ObjectID `bson:"_id" json:"_id"`
 	Login    string             `yaml:"login" bson:"login" json:"login"`
 	Roles    []string           `yaml:"roles" bson:"roles" json:"roles"`
-	Password string             `yaml:"password" bson:"password"`
+	Password string             `yaml:"password" bson:"password" json:"-"`
 }
 
 type Token struct {

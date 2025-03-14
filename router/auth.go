@@ -75,7 +75,7 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			return
 		}
 
-		storedRoles, _ := nestedData["roles"].([]string)
+		storedRoles, _ := nestedData["roles"].(string)
 
 		if collectionUsers.Name() == "users" {
 			hasher := sha1.New()
@@ -99,11 +99,11 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			c.Status(http.StatusInternalServerError)
 			return
 		}
-
+		roles := strings.Split(storedRoles, ",")
 		c.JSON(http.StatusOK, models.Token{Access: tokenString, User: models.User{
 			ID:    ID,
 			Login: input.Login,
-			Roles: storedRoles,
+			Roles: roles,
 		}})
 	}
 }
