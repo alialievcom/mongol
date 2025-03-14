@@ -15,6 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 )
@@ -74,7 +75,7 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			return
 		}
 
-		storedRoles, _ := nestedData["roles"].(string)
+		storedRoles, _ := nestedData["roles"].([]string)
 
 		if collectionUsers.Name() == "users" {
 			hasher := sha1.New()
@@ -181,15 +182,29 @@ func createCheckTokenHandler(cfg *models.Config) gin.HandlerFunc {
 			utils.ErrorResponse(c, http.StatusUnauthorized, "no token in header")
 			return
 		}
-		_, err := VerToken(
+		roles, err := VerToken(
 			c,
 			token[0],
 			cfg.Api.SecretKey,
 		)
-		if err == nil {
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusUnauthorized, err.Error())
 			return
 		}
-		utils.ErrorResponse(c, http.StatusUnauthorized, err.Error())
+		// nil is equal all
+		if roles == nil {
+			return
+		}
+		if slices.Contains(*roles, "*") {
+			return
+		}
+		method := c.Request.Method
+		for _, r := range *roles {
+			if method == r {
+				return
+			}
+		}
+		utils.ErrorResponse(c, http.StatusUnauthorized, "no such role")
 	}
 }
 
