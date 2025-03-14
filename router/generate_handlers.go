@@ -115,11 +115,8 @@ func createGetHandler(collection *mongo.Collection, cfg models.Collection) gin.H
 			return
 		}
 
-		for i, _ := range files {
-			_, ok := files[i]["password"]
-			if ok {
-				files[i]["password"] = "-"
-			}
+		for _, file := range files {
+			sanitizePasswords(file)
 		}
 
 		c.JSON(http.StatusOK, files)
@@ -142,5 +139,24 @@ func createDeleteHandler(collection *mongo.Collection) gin.HandlerFunc {
 		}
 
 		c.Status(http.StatusOK)
+	}
+}
+
+func sanitizePasswords(doc bson.M) {
+	for key, value := range doc {
+		if key == "password" {
+			doc[key] = "-"
+		} else {
+			if nestedDoc, ok := value.(bson.M); ok {
+				sanitizePasswords(nestedDoc)
+			}
+			if array, ok := value.([]interface{}); ok {
+				for _, item := range array {
+					if nestedDoc, ok := item.(bson.M); ok {
+						sanitizePasswords(nestedDoc)
+					}
+				}
+			}
+		}
 	}
 }
