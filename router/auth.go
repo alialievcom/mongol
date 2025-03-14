@@ -181,26 +181,15 @@ func createCheckTokenHandler(cfg *models.Config) gin.HandlerFunc {
 			utils.ErrorResponse(c, http.StatusUnauthorized, "no token in header")
 			return
 		}
-		roles, err := VerToken(
+		_, err := VerToken(
 			c,
 			token[0],
 			cfg.Api.SecretKey,
 		)
-		if err != nil {
-			utils.ErrorResponse(c, http.StatusUnauthorized, err.Error())
+		if err == nil {
 			return
 		}
-		// nil is equal all
-		if roles == nil {
-			return
-		}
-		method := c.Request.Method
-		for _, r := range *roles {
-			if method == r {
-				return
-			}
-		}
-		utils.ErrorResponse(c, http.StatusUnauthorized, "no such role")
+		utils.ErrorResponse(c, http.StatusUnauthorized, err.Error())
 	}
 }
 
