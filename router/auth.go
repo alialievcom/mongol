@@ -74,7 +74,7 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			return
 		}
 
-		storedRoles, _ := nestedData["roles"].([]string)
+		storedRoles, _ := nestedData["roles"].(string)
 
 		if collectionUsers.Name() == "users" {
 			hasher := sha1.New()
