@@ -38,6 +38,8 @@ func LoadConfig(filename string) (*models.Config, error) {
 			QueryFilters:      details.GetQueryFilters(),
 		}
 	}
+	uri := os.Getenv("MONGO_URI")
+	cfg.Mongo.URI = uri
 
 	cfg.Api.SecretKey = []byte(cfg.Api.SecretKeyYML)
 

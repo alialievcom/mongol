@@ -7,11 +7,16 @@ import (
 	"github.com/AliAlievMos/mongol"
 	"io"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 )
 
 func init() {
+	err := os.Setenv("MONGO_URI", "mongodb://root:password@127.0.0.1:27017")
+	if err != nil {
+		panic(err)
+	}
 	go func() {
 		mongol.StartApp("./config_test.yml")
 	}()

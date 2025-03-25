@@ -6,7 +6,6 @@ api:
   origin: "*"
 mongo:
   db: exampleDB
-  uri: "mongodb://root:password@127.0.0.1:27017"
 
   users:
     - login: "admin"

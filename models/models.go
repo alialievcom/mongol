@@ -29,8 +29,8 @@ func (cc *CollectionConfig) GetQueryFilters() []string {
 }
 
 type MongoConfig struct {
-	DB          string                      `yaml:"db"`
-	URI         string                      `yaml:"uri"`
+	DB          string `yaml:"db"`
+	URI         string
 	Collections []string                    `yaml:"collections"`
 	Details     map[string]CollectionConfig `yaml:",inline"`
 	Users       []User                      `yaml:"users"`
