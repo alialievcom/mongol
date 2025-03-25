@@ -7,17 +7,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
+	"strings"
 )
 
 func RunRouter(collections []*mongo.Collection, cfg *sites_core.Config) {
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{cfg.Api.Origin},
-		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"*"},
+		AllowMethods:     strings.Split(cfg.Api.Methods, ", "),
+		AllowHeaders:     strings.Split(cfg.Api.Headers, ", "),
 		AllowCredentials: true,
 	}))
-	r.Use(corsMiddleware(cfg.Api.Origin))
+	r.Use(corsMiddleware(cfg.Api))
 	var authCol *mongo.Collection
 	var authColName string
 	if cfg.Mongo.Auth.AuthCollection != nil {

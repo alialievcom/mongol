@@ -1,13 +1,16 @@
 package router
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/AliAlievMos/mongol/models"
+	"github.com/gin-gonic/gin"
+)
 
-func corsMiddleware(origin string) gin.HandlerFunc {
+func corsMiddleware(cfg models.Api) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+		c.Writer.Header().Set("Access-Control-Allow-Origin", cfg.Origin)
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", cfg.Headers)
+		c.Writer.Header().Set("Access-Control-Allow-Methods", cfg.Methods)
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
