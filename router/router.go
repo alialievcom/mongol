@@ -40,10 +40,10 @@ func RunRouter(collections []*mongo.Collection, cfg *sites_core.Config) {
 	for _, collection := range collections {
 		collectionName := collection.Name()
 		details := cfg.GeneratedStructMap[collectionName]
-
-		authen.POST("/"+collectionName, createPostHandler(collection, details.Model))
-		r.GET("/"+collectionName, createGetHandler(collection, details))
-		authen.DELETE("/"+collectionName+"/:id", createDeleteHandler(collection))
+		authen.POST("/"+collectionName, createCheckRoleMiddleware(details.NecessaryAuthRole[constants.Post]), createPostHandler(collection, details.Model))
+		authen.PUT("/"+collectionName, createCheckRoleMiddleware(details.NecessaryAuthRole[constants.Put]), createPostHandler(collection, details.Model))
+		r.GET("/"+collectionName, createCheckRoleMiddleware(details.NecessaryAuthRole[constants.Get]), createGetHandler(collection, details))
+		authen.DELETE("/"+collectionName+"/:id", createCheckRoleMiddleware(details.NecessaryAuthRole[constants.Delete]), createDeleteHandler(collection))
 	}
 
 	r.OPTIONS("/*path", func(c *gin.Context) {

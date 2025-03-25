@@ -32,9 +32,10 @@ func LoadConfig(filename string) (*models.Config, error) {
 		}
 		structType := generateStructWrapper(details.Fields)
 		cfg.GeneratedStructMap[collection] = models.Collection{
-			Model:        structType,
-			SortBy:       details.SortBy,
-			QueryFilters: details.GetQueryFilters(),
+			Model:             structType,
+			SortBy:            details.SortBy,
+			NecessaryAuthRole: details.NecessaryAuthRole,
+			QueryFilters:      details.GetQueryFilters(),
 		}
 	}
 

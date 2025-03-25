@@ -15,8 +15,9 @@ type Field struct {
 }
 
 type CollectionConfig struct {
-	Fields []Field `yaml:"fields"`
-	SortBy string  `yaml:"sort_by"`
+	Fields            []Field           `yaml:"fields"`
+	SortBy            string            `yaml:"sort_by"`
+	NecessaryAuthRole map[string]string `yaml:"necessary_auth_role"`
 }
 
 func (cc *CollectionConfig) GetQueryFilters() []string {
@@ -54,9 +55,10 @@ type Config struct {
 }
 
 type Collection struct {
-	Model        reflect.Type
-	SortBy       string
-	QueryFilters []string
+	Model             reflect.Type
+	SortBy            string
+	NecessaryAuthRole map[string]string
+	QueryFilters      []string
 }
 
 type User struct {

@@ -4,7 +4,10 @@ import (
 	"context"
 	"crypto/sha1"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/AliAlievMos/mongol/constants"
 	"github.com/AliAlievMos/mongol/models"
 	"github.com/AliAlievMos/mongol/utils"
 	"github.com/dgrijalva/jwt-go"
@@ -75,7 +78,11 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			return
 		}
 
-		storedRoles, _ := nestedData["roles"].(string)
+		roles, err := getRolesFromMongoData(nestedData)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 
 		if collectionUsers.Name() == "users" {
 			hasher := sha1.New()
@@ -91,7 +98,7 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 		custom := jwt.MapClaims{
 			"username": input.Login,
 			"exp":      time.Now().Add(500 * time.Hour).Unix(),
-			"roles":    storedRoles,
+			"roles":    roles,
 		}
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, custom)
 		tokenString, err := token.SignedString(cfg.Api.SecretKey)
@@ -99,7 +106,6 @@ func createLoginHandler(collectionUsers *mongo.Collection, cfg *models.Config) g
 			c.Status(http.StatusInternalServerError)
 			return
 		}
-		roles := strings.Split(storedRoles, ",")
 		c.JSON(http.StatusOK, models.Token{Access: tokenString, User: models.User{
 			ID:    ID,
 			Login: input.Login,
@@ -171,6 +177,33 @@ func createRegHandler(collection *mongo.Collection, cfg *models.Config) gin.Hand
 	}
 }
 
+func createCheckRoleMiddleware(needRole string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if needRole == "" {
+			return
+		}
+		v, ok := c.Get(constants.Roles)
+		if !ok {
+			utils.ErrorResponse(c, http.StatusUnauthorized, "can't get roles from ctx")
+			return
+		}
+		haveRoles, ok := v.([]string)
+		if !ok {
+			utils.ErrorResponse(c, http.StatusUnauthorized, "can't parse roles from ctx")
+			return
+		}
+		if slices.Contains(haveRoles, "*") {
+			return
+		}
+
+		if !slices.Contains(haveRoles, needRole) {
+			utils.ErrorResponse(c, http.StatusUnauthorized, fmt.Sprintf("you need role: %s", needRole))
+			return
+		}
+	}
+
+}
+
 func createCheckTokenHandler(cfg *models.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.Request.Header["Authorization"]
@@ -193,18 +226,14 @@ func createCheckTokenHandler(cfg *models.Config) gin.HandlerFunc {
 		}
 		// nil is equal all
 		if roles == nil {
+			c.Set(constants.Roles, []string{"*"})
 			return
 		}
 		if slices.Contains(*roles, "*") {
+			c.Set(constants.Roles, []string{"*"})
 			return
 		}
-		method := c.Request.Method
-		for _, r := range *roles {
-			if method == r {
-				return
-			}
-		}
-		utils.ErrorResponse(c, http.StatusUnauthorized, "no such role")
+		c.Set(constants.Roles, *roles)
 	}
 }
 
@@ -225,9 +254,17 @@ func VerToken(_ *gin.Context, tokenString string, secretKey []byte) (*[]string, 
 		if validTime {
 			return nil, errors.New("expired token")
 		}
-		roles, ok := claims["roles"].([]string)
+		rolesI, ok := claims["roles"].([]interface{})
 		if !ok {
 			return nil, nil
+		}
+		var roles = make([]string, len(rolesI))
+		for i, v := range rolesI {
+			role, ok := v.(string)
+			if !ok {
+				continue
+			}
+			roles[i] = role
 		}
 		return &roles, nil
 	}
@@ -276,4 +313,18 @@ func getFilterName(cfg *models.Config) string {
 		return "login"
 	}
 	return cfg.Mongo.Auth.AuthLocation + ".login"
+}
+
+func getRolesFromMongoData(dataDB primitive.M) ([]string, error) {
+	var user models.User
+	marshal, err := json.Marshal(dataDB)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(marshal, &user)
+	if err != nil {
+		return nil, err
+	}
+	return user.Roles, err
 }

@@ -1,18 +1,28 @@
 # example config
 name: Name
 api:
-  port: ":8085"
+  port: ":8080"
   secret_key: "uCPzEwGkshf"
   origin: "*"
 mongo:
   db: exampleDB
-  uri: "mongodb://root:example@localhost:27017"
+  uri: "mongodb://root:password@127.0.0.1:27017"
 
   users:
     - login: "admin"
       password: "adminpass"
-    - login: "user2"
-      password: "userpass"
+      roles: ["*"]
+    - login: "user_can_delete"
+      password: "adminpass"
+      roles: ["delete dictionaries"]
+    - login: "user_can_get"
+      password: "adminpass"
+      roles: ["get dictionaries"]
+    - login: "user_with_nil"
+      password: "adminpass"
+    - login: "user_with_empty"
+      password: "adminpass"
+      roles: []
   collections:
     [
     "publication",
@@ -20,10 +30,12 @@ mongo:
     "translations",
     "dictionaries"
     ]
-  auth:
-    auth_collection: "authors"
-    auth_location: "author.user"
   dictionaries:
+    necessary_auth_role:
+      post: "post dictionaries"
+      put: "put dictionaries"
+      get: "get dictionaries"
+      delete: "delete dictionaries"
     fields:
       - Name: Dict
         Type: "[]struct"
