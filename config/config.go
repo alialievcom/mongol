@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/AliAlievMos/mongol/models"
 	"github.com/iancoleman/strcase"
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"gopkg.in/yaml.v2"
 	"log"
@@ -38,7 +39,7 @@ func LoadConfig(filename string) (*models.Config, error) {
 			QueryFilters:      details.GetQueryFilters(),
 		}
 	}
-	uri := os.Getenv("MONGO_URI")
+	uri := getEnv("MONGO_URI")
 	cfg.Mongo.URI = uri
 
 	cfg.Api.SecretKey = []byte(cfg.Api.SecretKeyYML)
@@ -103,4 +104,12 @@ func generateStruct(fields []models.Field) []reflect.StructField {
 		})
 	}
 	return structFields
+}
+
+func getEnv(key string) string {
+	envFile, _ := godotenv.Read(".env")
+	if envFile[key] != "" {
+		return envFile[key]
+	}
+	return os.Getenv(key)
 }
